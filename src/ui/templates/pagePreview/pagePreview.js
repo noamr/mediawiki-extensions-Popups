@@ -7,11 +7,33 @@ import { escapeHTML } from '../templateUtil';
 
 const defaultExtractWidth = 215;
 
+let pagePreviewTemplate = null
 /**
  * @param {ext.popups.PagePreviewModel} model
  * @param {ext.popups.Thumbnail|null} thumbnail
  * @return {JQuery}
  */
+
+function getPagePreviewTemplate() {
+	if (pagePreviewTemplate) {
+		return pagePreviewTemplate;	
+	}
+
+	pagePreviewTemplate = document.createElement('template');
+	pagePreviewTemplate.innerHTML = `
+		<a class="mwe-popups-discreet">
+		</a>
+		<a class="mwe-popups-extract">
+		</a>
+		<footer>
+			<a class='mwe-popups-settings-icon'>
+				<span class="mw-ui-icon mw-ui-icon-element mw-ui-icon-popups-settings"></span>
+			</a>
+		</footer>
+	`
+
+	return pagePreviewTemplate
+}
 
 export function renderPagePreview(
 	model, thumbnail
@@ -20,30 +42,28 @@ export function renderPagePreview(
 		languageCode = escapeHTML( model.languageCode ),
 		languageDirection = escapeHTML( model.languageDirection );
 
-	const $el = renderPopup( model.type,
-		`
-			${thumbnail ? `<a href='${url}' class='mwe-popups-discreet'></a>` : ''}
-			<a dir='${languageDirection}' lang='${languageCode}' class='mwe-popups-extract' href='${url}'></a>
-			<footer>
-				<a class='mwe-popups-settings-icon'>
-					<span class="mw-ui-icon mw-ui-icon-element mw-ui-icon-small mw-ui-icon-settings"></span>
-				</a>
-			</footer>
-		`
-	);
+	const preview = getPagePreviewTemplate().content.cloneNode( true );
+	const discreet = preview.querySelector('.mwe-popups-discreet');
+	const extract = preview.querySelector('.mwe-popups-extract');
 
-	const [root] = $el
-
-	if ( thumbnail ) {
-		root.querySelector('.mwe-popups-discreet').appendChild(thumbnail.el[0]);
+	if (thumbnail) {
+		discreet.appendChild(thumbnail.el[0]);
+		discreet.setAttribute('href', url);
+	} else {
+		discreet.remove();
 	}
+
+	extract.setAttribute('href', url);
+	extract.setAttribute('lang', languageCode);
+	extract.setAttribute('dir', languageDirection);
 
 	if ( model.extract ) {
 		const extractWidth = getExtractWidth( thumbnail );
-		root.style.setProperty('--extract-width', extractWidth)
-		root.querySelector('.mwe-popups-extract').appendChild(model.extract[0])
+		preview.querySelector('footer').style.setProperty('--extract-width', extractWidth);
+		model.extract.forEach(e => extract.appendChild(e));
 	}
 
+	const $el = renderPopup( model.type, preview);
 	return $el;
 }
 

@@ -6,15 +6,30 @@ import { escapeHTML } from '../templateUtil';
 
 /**
  * @param {ext.popups.previewTypes} type
- * @param {string} html HTML string.
+ * @param {Element} innerElement the inner element.
  * @return {JQuery}
  */
-export function renderPopup( type, html ) {
-	type = escapeHTML( type );
 
-	return $( $.parseHTML( `
-	<div class='mwe-popups mwe-popups-type-${type}' aria-hidden>
-		<div class='mwe-popups-container'>${html}</div>
-	</div>
-	`.trim() ) );
+let template = null
+
+function getPopupTemplate() {
+	if (template) {
+		return template;
+	}
+
+	template = document.createElement('template');
+	template.innerHTML = `
+	<div class='mwe-popups' aria-hidden>
+		<div class='mwe-popups-container'></div>
+	</div>`;
+
+	return template;
+}
+
+export function renderPopup( type, innerElement ) {
+	type = escapeHTML( type );
+	const popup = getPopupTemplate().content.cloneNode(true).querySelector('.mwe-popups');
+	popup.classList.add(`mwe-popups-type-${type}`);
+	popup.querySelector('.mwe-popups-container').appendChild(innerElement);
+	return $(popup);
 }
