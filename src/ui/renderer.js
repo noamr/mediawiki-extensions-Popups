@@ -288,11 +288,7 @@ export function show(
 		$(previewElement.querySelector('.mwe-popups-scroll')).trigger( 'scroll' );
 	}
 
-	return wait( 200 )
-		.then( () => {
-			bindBehavior( preview, behavior );
-			behavior.previewShow( token );
-		} );
+	return Promise.race(wait(200), new Promise(() => bindBehavior(preview, behavior)));
 }
 
 /**
