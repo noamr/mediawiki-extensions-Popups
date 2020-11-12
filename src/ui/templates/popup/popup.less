@@ -145,7 +145,10 @@
 		}
 
 		footer {
-			width: var(--extract-width, @popupTallWidth);
+			width: @popupTallWidth;
+			&.mwe-popups-narrow-thumbnail {
+				width: calc(@popupTallWidth + var(--thumbnail-offset));
+			}
 			left: 0;
 		}
 	}

@@ -6,7 +6,6 @@ import { renderPopup } from '../popup/popup';
 import { createTemplate } from '../templateUtil';
 import templateHTML from '!raw-loader!./pagePreview.html'
 const cloneFragment = createTemplate(templateHTML);
-const defaultExtractWidth = 215;
 
 let pagePreviewTemplate = null
 /**
@@ -25,6 +24,9 @@ export function renderPagePreview(
 	if (thumbnail) {
 		discreet.appendChild(thumbnail.el[0]);
 		discreet.setAttribute('href', model.url);
+		if (thumbnail.isNarrow) {
+			preview.classList.add('mwe-popups-narrow-thumbnail');
+		}
 	} else {
 		discreet.remove();
 	}
@@ -33,25 +35,16 @@ export function renderPagePreview(
 	extract.setAttribute('lang', model.languageCode);
 	extract.setAttribute('dir', model.languageDirection);
 
+	const footer = preview.querySelector('footer');
+
 	if ( model.extract ) {
-		const extractWidth = getExtractWidth( thumbnail );
-		preview.querySelector('footer').style.setProperty('--extract-width', extractWidth);
+		if (thumbnail && thumbnail.narrow) {
+			footer.classList.add('mwe-popups-narrow-thumbnail');
+			footer.style.setProperty('--thumbnail-offset', thumbnail.offset);
+		}
 		model.extract.forEach(e => extract.appendChild(e));
 	}
 
 	const $el = renderPopup( model.type, preview);
 	return $el;
-}
-
-export { defaultExtractWidth }; // for testing
-
-/**
- * Calculates width of extract based on the associated thumbnail
- *
- * @param {ext.popups.Thumbnail|null} thumbnail model
- * @return {string} representing the css width attribute to be
- *   used for the extract
- */
-export function getExtractWidth( thumbnail ) {
-	return thumbnail && thumbnail.isNarrow ? `${defaultExtractWidth + thumbnail.offset}px` : '';
 }
