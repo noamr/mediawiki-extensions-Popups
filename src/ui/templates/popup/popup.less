@@ -145,7 +145,7 @@
 		}
 
 		footer {
-			width: @popupTallWidth;
+			width: var(--extract-width, @popupTallWidth);
 			left: 0;
 		}
 	}
@@ -164,7 +164,7 @@
 		}
 
 		footer {
-			width: @popupWidth - @cogIconSize;
+			width: var(--extract-width, @popupWidth - @cogIconSize);
 		}
 	}
 

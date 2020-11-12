@@ -12,6 +12,7 @@ const defaultExtractWidth = 215;
  * @param {ext.popups.Thumbnail|null} thumbnail
  * @return {JQuery}
  */
+
 export function renderPagePreview(
 	model, thumbnail
 ) {
@@ -31,16 +32,16 @@ export function renderPagePreview(
 		`
 	);
 
+	const [root] = $el
+
 	if ( thumbnail ) {
-		$el.find( '.mwe-popups-discreet' ).append( thumbnail.el );
+		root.querySelector('.mwe-popups-discreet').appendChild(thumbnail.el[0]);
 	}
 
 	if ( model.extract ) {
 		const extractWidth = getExtractWidth( thumbnail );
-		$el.find( '.mwe-popups-extract' )
-			.css( 'width', extractWidth )
-			.append( model.extract );
-		$el.find( 'footer' ).css( 'width', extractWidth );
+		root.style.setProperty('--extract-width', extractWidth)
+		root.querySelector('.mwe-popups-extract').appendChild(model.extract[0])
 	}
 
 	return $el;
