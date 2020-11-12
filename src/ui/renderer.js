@@ -10,10 +10,7 @@ import { renderPreview } from './templates/preview/preview';
 import { renderReferencePreview } from './templates/referencePreview/referencePreview';
 import { renderPagePreview } from './templates/pagePreview/pagePreview';
 
-const $window = $( window ),
-	landscapePopupWidth = 450,
-	portraitPopupWidth = 320,
-	pointerSize = 8; // Height of the pointer.
+const $window = $( window );
 
 /**
  * Extracted from `mw.popups.createSVGMasks`. This is just an SVG mask to point
@@ -253,7 +250,6 @@ export function show(
 	const layout = createLayout(
 		preview.isTall,
 		event,
-		pointerSize,
 		dir
 	);
 
@@ -263,7 +259,7 @@ export function show(
 
 	layoutPreview(
 		preview, layout, getClasses( preview, layout ),
-		SIZES.landscapeImage.h, pointerSize
+		SIZES.landscapeImage.h
 	);
 
 	previewElement.removeAttribute('aria-hidden');
@@ -332,9 +328,9 @@ export function hide( preview ) {
  * vertically (`flippedX` and `flippedY` respectively).
  *
  * @typedef {Object} ext.popups.PreviewLayout
- * @property {Object} offset
- * @property {number} offset.top
- * @property {number} offset.left
+ * @property {number} top
+ * @property {number} bottom
+ * @property {number} pageX
  * @property {boolean} flippedX
  * @property {boolean} flippedY
  * @property {string} dir 'ltr' if left-to-right, 'rtl' if right-to-left.
@@ -343,11 +339,10 @@ export function hide( preview ) {
 /**
  * @param {boolean} isLandscape
  * @param {ext.popups.PopupTriggerEvent} eventData Data related to the event that triggered showing
- * @param {number} pointerSpaceSize Space reserved for the pointer
  * @param {string} dir 'ltr' if left-to-right, 'rtl' if right-to-left.
  * @return {ext.popups.PreviewLayout}
  */
-export function createLayout(isLandscape, eventData, pointerSpaceSize, dir) {
+export function createLayout(isLandscape, eventData, dir) {
 	const flippedX = eventData.clientX > eventData.innerWidth / 2;
 	const flippedY = eventData.clientY > eventData.innerHeight / 2;
 	const offsetCorrection = eventData.eventType === 'mouse' ? 18 : 0;
@@ -420,7 +415,7 @@ export function getClasses( preview, layout ) {
  * @return {void}
  */
 export function layoutPreview(
-	preview, layout, classes, predefinedLandscapeImageHeight, pointerSpaceSize
+	preview, layout, classes, predefinedLandscapeImageHeight
 ) {
 	const popup = preview.el,
 		isTall = preview.isTall,
@@ -432,12 +427,11 @@ export function layoutPreview(
 		!flippedY && !isTall && hasThumbnail &&
 			thumbnail.height < predefinedLandscapeImageHeight
 	) {
-		popup.css('--pointer-margin', thumbnail.height - pointerSpaceSize);
+		popup.css('--pointer-margin', `calc(${thumbnail.height}px - var(--pointer-size)`);
 	}
 
 	popup.css('--link-top', `${Math.round(layout.top)}px`)
 		 .css('--link-bottom', `${Math.round(layout.bottom)}px`)
-		 .css('--pointer-space-size', `${Math.round(pointerSpaceSize)}px`)
 		 .css('--offset-x', `${layout.pageX}px`);
 	// eslint-disable-next-line mediawiki/class-doc
 	popup.addClass( classes.join( ' ' ) );

@@ -28,7 +28,9 @@
 	min-width: 300px;
 	border-radius: @borderRadius;
 
-	top: ~"calc(var(--link-bottom) + var(--pointer-space-size))";
+	--pointer-size: 8px;
+
+	top: ~"calc(var(--link-bottom) + var(--pointer-size))";
 	left: var(--offset-x);
 
 	&[aria-hidden] {
