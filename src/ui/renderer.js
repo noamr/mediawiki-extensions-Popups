@@ -272,18 +272,20 @@ export function show(
 		dir
 	);
 
-	preview.el.appendTo( container );
+	const previewElement = preview.el[0]
+
+	container.appendChild(previewElement)
 
 	layoutPreview(
 		preview, layout, getClasses( preview, layout ),
 		SIZES.landscapeImage.h, pointerSize
 	);
 
-	preview.el.show();
+	previewElement.removeAttribute('aria-hidden');
 
 	// Trigger fading effect for reference previews after the popup has been rendered
-	if ( preview.el.hasClass( 'mwe-popups-type-reference' ) ) {
-		preview.el.find( '.mwe-popups-scroll' ).first().trigger( 'scroll' );
+	if ( previewElement.classList.contains( 'mwe-popups-type-reference' ) ) {
+		$(previewElement.querySelector('.mwe-popups-scroll')).trigger( 'scroll' );
 	}
 
 	return wait( 200 )

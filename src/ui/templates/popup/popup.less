@@ -22,11 +22,15 @@
 	z-index: @zIndexPopup;
 	.box-shadow( 0 30px 90px -20px rgba( 0, 0, 0, 0.3 ), 0 0 1px 1px @borderColorPopup; );
 	padding: 0;
-	display: none;
+	display: block;
 	font-size: 14px;
 	line-height: @lineHeight;
 	min-width: 300px;
 	border-radius: @borderRadius;
+
+	&[aria-hidden] {
+		display: none;
+	}
 
 	.mw-ui-icon {
 		// mw-ui-icon assumes a font size of 16px so we must declare it here
