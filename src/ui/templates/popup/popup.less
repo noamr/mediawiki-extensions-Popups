@@ -28,6 +28,9 @@
 	min-width: 300px;
 	border-radius: @borderRadius;
 
+	top: ~"calc(var(--link-bottom) + var(--pointer-space-size))";
+	left: var(--offset-x);
+
 	&[aria-hidden] {
 		display: none;
 	}
@@ -164,6 +167,7 @@
 			overflow: hidden;
 			margin-bottom: @minHeight + 7px;
 			padding-bottom: 0;
+			margin-top: var(--pointer-margin, 0);
 		}
 
 		footer {
@@ -301,7 +305,17 @@
 		}
 	}
 
+	&.flipped-x, &.flipped-x-y {
+		left: auto;
+		right: ~"calc(100% - var(--offset-x))";
+	}
+	&.flipped-y, &.flipped-x-y {
+		top: auto;
+		bottom: ~"calc(100% - var(--link-top) + 8px)";
+	}
+
 	&.flipped-y {
+
 		&:before {
 			.mwe-popups-border-pointer-bottom( 8px, 10px, @colorGray10, 0 );
 		}

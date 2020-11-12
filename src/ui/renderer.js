@@ -352,22 +352,10 @@ export function createLayout(isLandscape, eventData, pointerSpaceSize, dir) {
 	const flippedY = eventData.clientY > eventData.innerHeight / 2;
 	const offsetCorrection = eventData.eventType === 'mouse' ? 18 : 0;
 
-	const clientOffset = {
-		left: eventData.clientX + (flippedX ? (
-			(( eventData.eventType === 'key' ) ? eventData.clientRect.width : 0)
-		 	+ offsetCorrection
-			- (isLandscape ? landscapePopupWidth : portraitPopupWidth)
-		) : -offsetCorrection),
-		top: flippedY ?
-			eventData.clientRect.top - pointerSpaceSize :
-			eventData.clientRect.bottom + pointerSpaceSize
-	}
-
 	return {
-		offset: {
-			left: clientOffset.left + eventData.pageXOffset,
-			top: clientOffset.top + eventData.pageYOffset
-		},
+		top: eventData.clientRect.top + eventData.pageYOffset,
+		bottom: eventData.clientRect.bottom + eventData.pageYOffset,
+		pageX: eventData.clientX + eventData.pageXOffset + (flippedX ? offsetCorrection : -offsetCorrection),
 		flippedX: dir === 'rtl' ? !flippedX : flippedX,
 		flippedY,
 		dir
@@ -439,29 +427,20 @@ export function layoutPreview(
 		hasThumbnail = preview.hasThumbnail,
 		thumbnail = preview.thumbnail,
 		flippedY = layout.flippedY;
-	let offsetTop = layout.offset.top;
 
 	if (
 		!flippedY && !isTall && hasThumbnail &&
 			thumbnail.height < predefinedLandscapeImageHeight
 	) {
-		popup.find( '.mwe-popups-extract' ).css(
-			'margin-top',
-			thumbnail.height - pointerSpaceSize
-		);
+		popup.css('--pointer-margin', thumbnail.height - pointerSpaceSize);
 	}
 
+	popup.css('--link-top', `${Math.round(layout.top)}px`)
+		 .css('--link-bottom', `${Math.round(layout.bottom)}px`)
+		 .css('--pointer-space-size', `${Math.round(pointerSpaceSize)}px`)
+		 .css('--offset-x', `${layout.pageX}px`);
 	// eslint-disable-next-line mediawiki/class-doc
 	popup.addClass( classes.join( ' ' ) );
-
-	if ( flippedY ) {
-		offsetTop -= popup.outerHeight();
-	}
-
-	popup.css( {
-		top: offsetTop,
-		left: `${layout.offset.left}px`
-	} );
 
 	if ( hasThumbnail ) {
 		setThumbnailClipPath( preview, layout );
