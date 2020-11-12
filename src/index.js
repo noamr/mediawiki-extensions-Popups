@@ -251,59 +251,59 @@ function registerChangeListeners(
 		if ( !mwTitle )
 			return;
 
-		if ( !mwTitle ) {
-			return;
+		target.removeAttribute('title');
+		const gateways = {
+			[previewTypes.TYPE_PAGE]: pagePreviewGateway,
+			[previewTypes.TYPE_REFERENCE]: referenceGateway
 		}
 
-		target.removeAttribute('title');
-
-		const showPopup = ({clientX, clientY, clientRects}) => {
+		const showPopup = ({clientX, clientY, clientRect, eventType}) => {
 			if (gateway === null) {
 				return;
 			}
 
 			if (typeof gateway === 'undefined' ) {
 				type = getPreviewType( target, mw.config, mwTitle );
-				switch ( type ) {
-					case previewTypes.TYPE_PAGE:
-						gateway = pagePreviewGateway;
-						break;
-					case previewTypes.TYPE_REFERENCE:
-						gateway = referenceGateway;
-						break;
-					default:
-						gateway = null;
-						return;
+				gateway = gateways[type] || null;
+				if (!gateway) {
+					return;
 				}
 			}
 
-			const event = {clientX, clientY, clientRects, pageXOffset, pageYOffset, target};
+			const event = {eventType, target, clientX, clientY, clientRect, pageXOffset, pageYOffset, innerWidth, innerHeight};
 			boundActions.linkDwell( mwTitle, target, event, gateway, generateToken, type );			
 		};
 
-		const hidePopup = () => {
-			if ( mwTitle ) {
-				boundActions.abandon();
-			}
-		};
+		const hidePopup = () =>  boundActions.abandon();
+
+		const getNearestClientRect = (rects, y) => 
+			Array.from(rects).reduce((result, rect) => {
+				const deltaY = Math.abs(y - rect.top + y - rect.bottom);
+				return result.deltaY < deltaY ? result : {rect, deltaY};
+			}, {rect: null, deltaY: Number.MAX_VALUE}).rect;
 
 		target.addEventListener('mouseover', event => {
-			const {clientX, clientY} = event;
+			const maxLinkWidthForCenteredPointer = 28; // Link with roughly < 4 chars.
+			const {clientY} = event;
 			const clientRects = target.getClientRects();
+			const clientRect = getNearestClientRect(clientRects, clientY);
+			const clientX = (clientRect.width > maxLinkWidthForCenteredPointer) ? event.clientX : (clientRect.left + targetRect.width / 2);
+
 			showPopup({
-				clientX, clientY, clientRects,
+				eventType: 'mouse',
+				clientX, clientY, clientRect,
 				pageXOffset, pageYOffset
 			});
 		});
 
 		target.addEventListener( 'keyup', event => {
 			const {target} = event;
-			const clientRects = target.getClientRects();
-			const [firstClientRect] = clientRects
+			const [clientRect] = target.getClientRects();
 			showPopup({
-				clientX: firstClientRect.left + firstClientRect.width / 2,
-				clientY: firstClientRect.top + firstClientRect.height / 2,
-				clientRects: [firstClientRect],
+				eventType: 'key',
+				clientX: clientRect.left,
+				clientY: clientRect.top + clientRect.height / 2,
+				clientRect,
 				pageXOffset, pageYOffset
 			});
 		});
@@ -311,11 +311,8 @@ function registerChangeListeners(
 		target.addEventListener( 'blur', hidePopup );
 		target.addEventListener( 'mouseout', hidePopup );
 		target.addEventListener( 'click', event => {
-			const mwTitle = titleFromElement( target, mw.config );
-			if ( mwTitle ) {
-				if ( previewTypes.TYPE_PAGE === getPreviewType( target, mw.config, mwTitle ) ) {
-					boundActions.linkClick( target );
-				}
+			if ( previewTypes.TYPE_PAGE === (type || getPreviewType( target, mw.config, mwTitle ) )) {
+				boundActions.linkClick( target );
 			}
 		} );
 	}

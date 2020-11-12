@@ -13,8 +13,7 @@ import { renderPagePreview } from './templates/pagePreview/pagePreview';
 const $window = $( window ),
 	landscapePopupWidth = 450,
 	portraitPopupWidth = 320,
-	pointerSize = 8, // Height of the pointer.
-	maxLinkWidthForCenteredPointer = 28; // Link with roughly < 4 chars.
+	pointerSize = 8; // Height of the pointer.
 
 /**
  * Extracted from `mw.popups.createSVGMasks`. This is just an SVG mask to point
@@ -55,12 +54,15 @@ export function init() {
  * The information passed from a key/mouse event to the renderer.
  *
  * @typedef {Object} ext.popups.PopupTriggerEvent
+ * @property {'key'|'mouse'} eventType
  * @property {Element} target
- * @property {DOMRect[]} clientRects
+ * @property {DOMRect} clientRect
  * @property {number} clientX
  * @property {number} clientY
  * @property {number} pageXOffset
  * @property {number} pageYOffset
+ * @property {number} innerWidth
+ * @property {number} innerHeight
  */
 
 
@@ -248,26 +250,9 @@ function createReferencePreview( model ) {
 export function show(
 	preview, event, $link, behavior, token, container, dir
 ) {
-	const pageX = event.clientX + event.pageXOffset;
-	const pageY = event.clientY + event.pageYOffset;
 	const layout = createLayout(
 		preview.isTall,
-		{
-			pageX,
-			pageY,
-			clientY: event.clientY
-		},
-		{
-			clientRects: event.clientRects,
-			offset: $link.offset(),
-			width: $link.width(),
-			height: $link.height()
-		},
-		{
-			scrollTop: event.pageYOffset,
-			width: window.innerWidth,
-			height: window.innerHeight
-		},
+		event,
 		pointerSize,
 		dir
 	);
@@ -288,7 +273,7 @@ export function show(
 		$(previewElement.querySelector('.mwe-popups-scroll')).trigger( 'scroll' );
 	}
 
-	return Promise.race(wait(200), new Promise(() => bindBehavior(preview, behavior)));
+	return Promise.race([wait(200), new Promise(() => bindBehavior(preview, behavior))]);
 }
 
 /**
@@ -356,100 +341,32 @@ export function hide( preview ) {
  */
 
 /**
- * @param {boolean} isPreviewTall
- * @param {Object} eventData Data related to the event that triggered showing
- *  a popup
- * @param {number} eventData.pageX
- * @param {number} eventData.pageY
- * @param {number} eventData.clientY
- * @param {Object} linkData Data related to the link that’s used for showing
- *  a popup
- * @param {ClientRectList} linkData.clientRects list of rectangles defined by
- *  four edges
- * @param {Object} linkData.offset
- * @param {number} linkData.width
- * @param {number} linkData.height
- * @param {Object} windowData Data related to the window
- * @param {number} windowData.scrollTop
- * @param {number} windowData.width
- * @param {number} windowData.height
+ * @param {boolean} isLandscape
+ * @param {ext.popups.PopupTriggerEvent} eventData Data related to the event that triggered showing
  * @param {number} pointerSpaceSize Space reserved for the pointer
  * @param {string} dir 'ltr' if left-to-right, 'rtl' if right-to-left.
  * @return {ext.popups.PreviewLayout}
  */
-export function createLayout(
-	isPreviewTall, eventData, linkData, windowData, pointerSpaceSize, dir
-) {
-	let flippedX = false,
-		flippedY = false,
-		offsetTop = eventData.pageY ?
-			// If it was a mouse event, position according to mouse
-			// Since client rectangles are relative to the viewport,
-			// take scroll position into account.
-			getClosestYPosition(
-				eventData.pageY - windowData.scrollTop,
-				linkData.clientRects,
-				false
-			) + windowData.scrollTop + pointerSpaceSize :
-			// Position according to link position or size
-			linkData.offset.top + linkData.height + pointerSize,
-		offsetLeft;
-	const clientTop = eventData.clientY ? eventData.clientY : offsetTop;
+export function createLayout(isLandscape, eventData, pointerSpaceSize, dir) {
+	const flippedX = eventData.clientX > eventData.innerWidth / 2;
+	const flippedY = eventData.clientY > eventData.innerHeight / 2;
+	const offsetCorrection = eventData.eventType === 'mouse' ? 18 : 0;
 
-	if ( eventData.pageX ) {
-		if ( linkData.width > maxLinkWidthForCenteredPointer ) {
-			// For wider links, position the popup's pointer at the
-			// mouse pointer's location. (x-axis)
-			offsetLeft = eventData.pageX;
-		} else {
-			// For smaller links, position the popup's pointer at
-			// the link's center. (x-axis)
-			offsetLeft = linkData.offset.left + linkData.width / 2;
-		}
-	} else {
-		offsetLeft = linkData.offset.left;
-	}
-
-	// X Flip
-	if ( offsetLeft > ( windowData.width / 2 ) ) {
-		offsetLeft += ( !eventData.pageX ) ? linkData.width : 0;
-		offsetLeft -= !isPreviewTall ?
-			portraitPopupWidth :
-			landscapePopupWidth;
-		flippedX = true;
-	}
-
-	if ( eventData.pageX ) {
-		offsetLeft += ( flippedX ) ? 18 : -18;
-	}
-
-	// Y Flip
-	if ( clientTop > ( windowData.height / 2 ) ) {
-		flippedY = true;
-
-		// Mirror the positioning of the preview when there's no "Y flip": rest
-		// the pointer on the edge of the link's bounding rectangle. In this case
-		// the edge is the top-most.
-		offsetTop = linkData.offset.top;
-
-		// Change the Y position to the top of the link
-		if ( eventData.pageY ) {
-			// Since client rectangles are relative to the viewport,
-			// take scroll position into account.
-			offsetTop = getClosestYPosition(
-				eventData.pageY - windowData.scrollTop,
-				linkData.clientRects,
-				true
-			) + windowData.scrollTop;
-		}
-
-		offsetTop -= pointerSpaceSize;
+	const clientOffset = {
+		left: eventData.clientX + (flippedX ? (
+			(( eventData.eventType === 'key' ) ? eventData.clientRect.width : 0)
+		 	+ offsetCorrection
+			- (isLandscape ? landscapePopupWidth : portraitPopupWidth)
+		) : -offsetCorrection),
+		top: flippedY ?
+			eventData.clientRect.top - pointerSpaceSize :
+			eventData.clientRect.bottom + pointerSpaceSize
 	}
 
 	return {
 		offset: {
-			top: offsetTop,
-			left: offsetLeft
+			left: clientOffset.left + eventData.pageXOffset,
+			top: clientOffset.top + eventData.pageYOffset
 		},
 		flippedX: dir === 'rtl' ? !flippedX : flippedX,
 		flippedY,
@@ -623,42 +540,4 @@ export function getThumbnailClipPathID( isTall, flippedY, flippedX ) {
 
 	// The 4 combinations not covered above don't need a clip-path.
 	return undefined;
-}
-
-/**
- * Given the rectangular box(es) find the 'y' boundary of the closest
- * rectangle to the point 'y'. The point 'y' is the location of the mouse
- * on the 'y' axis and the rectangular box(es) are the borders of the
- * element over which the mouse is located. There will be more than one
- * rectangle in case the element spans multiple lines.
- *
- * In the majority of cases the mouse pointer will be inside a rectangle.
- * However, some browsers (i.e. Chrome) trigger a hover action even when
- * the mouse pointer is just outside a bounding rectangle. That's why
- * we need to look at all rectangles and not just the rectangle that
- * encloses the point.
- *
- * @private
- * @param {number} y the point for which the closest location is being
- *  looked for
- * @param {ClientRectList} rects list of rectangles defined by four edges
- * @param {boolean} [isTop] should the resulting rectangle's top 'y'
- *  boundary be returned. By default the bottom 'y' value is returned.
- * @return {number}
- */
-export function getClosestYPosition( y, rects, isTop ) {
-	let minY = null, result;
-
-	Array.prototype.slice.call( rects ).forEach( ( rect ) => {
-		const deltaY = Math.abs( y - rect.top + y - rect.bottom );
-
-		if ( minY === null || minY > deltaY ) {
-			minY = deltaY;
-			// Make sure the resulting point is at or outside the rectangle
-			// boundaries.
-			result = ( isTop ) ? Math.floor( rect.top ) : Math.ceil( rect.bottom );
-		}
-	} );
-
-	return result;
 }
