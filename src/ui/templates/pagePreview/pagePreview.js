@@ -3,8 +3,9 @@
  */
 
 import { renderPopup } from '../popup/popup';
-import { escapeHTML } from '../templateUtil';
-
+import { createTemplate } from '../templateUtil';
+import templateHTML from '!raw-loader!./pagePreview.html'
+const cloneFragment = createTemplate(templateHTML);
 const defaultExtractWidth = 215;
 
 let pagePreviewTemplate = null
@@ -14,48 +15,23 @@ let pagePreviewTemplate = null
  * @return {JQuery}
  */
 
-function getPagePreviewTemplate() {
-	if (pagePreviewTemplate) {
-		return pagePreviewTemplate;	
-	}
-
-	pagePreviewTemplate = document.createElement('template');
-	pagePreviewTemplate.innerHTML = `
-		<a class="mwe-popups-discreet">
-		</a>
-		<a class="mwe-popups-extract">
-		</a>
-		<footer>
-			<a class='mwe-popups-settings-icon'>
-				<span class="mw-ui-icon mw-ui-icon-element mw-ui-icon-popups-settings"></span>
-			</a>
-		</footer>
-	`
-
-	return pagePreviewTemplate
-}
-
 export function renderPagePreview(
 	model, thumbnail
 ) {
-	const url = escapeHTML( model.url ),
-		languageCode = escapeHTML( model.languageCode ),
-		languageDirection = escapeHTML( model.languageDirection );
-
-	const preview = getPagePreviewTemplate().content.cloneNode( true );
+	const preview = cloneFragment();
 	const discreet = preview.querySelector('.mwe-popups-discreet');
 	const extract = preview.querySelector('.mwe-popups-extract');
 
 	if (thumbnail) {
 		discreet.appendChild(thumbnail.el[0]);
-		discreet.setAttribute('href', url);
+		discreet.setAttribute('href', model.url);
 	} else {
 		discreet.remove();
 	}
 
-	extract.setAttribute('href', url);
-	extract.setAttribute('lang', languageCode);
-	extract.setAttribute('dir', languageDirection);
+	extract.setAttribute('href', model.url);
+	extract.setAttribute('lang', model.languageCode);
+	extract.setAttribute('dir', model.languageDirection);
 
 	if ( model.extract ) {
 		const extractWidth = getExtractWidth( thumbnail );

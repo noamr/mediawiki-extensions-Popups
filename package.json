@@ -53,6 +53,7 @@
 		"less-loader": "4.1.0",
 		"nyc": "15.0.0",
 		"pre-commit": "1.2.2",
+		"raw-loader": "^4.0.2",
 		"redux": "4.0.1",
 		"redux-thunk": "2.3.0",
 		"stylelint-config-wikimedia": "0.10.1",

@@ -3,7 +3,10 @@
  */
 
 import { renderPopup } from '../popup/popup';
-import { escapeHTML } from '../templateUtil';
+import { escapeHTML, createTemplate } from '../templateUtil';
+import templateHTML from '!raw-loader!./preview.html'
+
+const cloneFragment = createTemplate(templateHTML);
 
 /**
  * @param {ext.popups.PagePreviewModel} model
@@ -13,41 +16,18 @@ import { escapeHTML } from '../templateUtil';
  * @return {JQuery}
  */
 
-let template = null
 
-function getTemplate() {
-	if (template) {
-		return template;
-	}
-
-	template = document.createElement('template');
-
-	template.innerHTML = `
-		<div class='mw-ui-icon mw-ui-icon-element'></div>
-		<strong class='mwe-popups-title'></strong>
-		<a class='mwe-popups-extract'>
-			<span class='mwe-popups-message'></span>
-		</a>
-		<footer>
-			<a class='mwe-popups-read-link'></a>
-		</footer>
-	`
-
-	return template;
-
-}
 export function renderPreview(
 	model, showTitle, extractMsg, linkMsg
 ) {
-	const title = escapeHTML( model.title ),
-		type = escapeHTML( model.type );
+	const title = escapeHTML( model.title );
 	extractMsg = escapeHTML( extractMsg );
 	linkMsg = escapeHTML( linkMsg );
 
-	const preview = getTemplate().content.cloneNode( true );
+	const preview = cloneFragment();
 	const titleElement = preview.querySelector('.mwe-popups-title');
 	const linkElement = preview.querySelector('.mw-popups-read-link')
-	preview.querySelector('.mw-ui-icon').classList.add(`mw-ui-icon-preview-${type}`);
+	preview.querySelector('.mw-ui-icon').classList.add(`mw-ui-icon-preview-${model.type}`);
 	if (showTitle) {
 		title.innerHTML = title;
 	} else {
