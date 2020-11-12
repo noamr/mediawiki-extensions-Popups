@@ -52,6 +52,19 @@ export function init() {
 }
 
 /**
+ * The information passed from a key/mouse event to the renderer.
+ *
+ * @typedef {Object} ext.popups.PopupTriggerEvent
+ * @property {Element} target
+ * @property {DOMRect[]} clientRects
+ * @property {number} clientX
+ * @property {number} clientY
+ * @property {number} pageXOffset
+ * @property {number} pageYOffset
+ */
+
+
+/**
  * The model of how a view is rendered, which is constructed from a response
  * from the gateway.
  *
@@ -96,7 +109,7 @@ export function render( model ) {
 		 *
 		 * See `show` for more detail.
 		 *
-		 * @param {Event} event
+		 * @param {ext.popups.PopupTriggerEvent} event
 		 * @param {Object} boundActions The
 		 *  [bound action creators](http://redux.js.org/docs/api/bindActionCreators.html)
 		 *  that were (likely) created in [boot.js](./boot.js).
@@ -223,7 +236,7 @@ function createReferencePreview( model ) {
  * between rendering and showing a preview. Merge #render and Preview#show.
  *
  * @param {ext.popups.Preview} preview
- * @param {Event} event
+ * @param {ext.popups.PopupTriggerEvent} event
  * @param {JQuery} $link event target
  * @param {ext.popups.PreviewBehavior} behavior
  * @param {string} token
@@ -235,23 +248,25 @@ function createReferencePreview( model ) {
 export function show(
 	preview, event, $link, behavior, token, container, dir
 ) {
+	const pageX = event.clientX + event.pageXOffset;
+	const pageY = event.clientY + event.pageYOffset;
 	const layout = createLayout(
 		preview.isTall,
 		{
-			pageX: event.pageX,
-			pageY: event.pageY,
+			pageX,
+			pageY,
 			clientY: event.clientY
 		},
 		{
-			clientRects: $link.get( 0 ).getClientRects(),
+			clientRects: event.clientRects,
 			offset: $link.offset(),
 			width: $link.width(),
 			height: $link.height()
 		},
 		{
-			scrollTop: $window.scrollTop(),
-			width: $window.width(),
-			height: $window.height()
+			scrollTop: event.pageYOffset,
+			width: window.innerWidth,
+			height: window.innerHeight
 		},
 		pointerSize,
 		dir

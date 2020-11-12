@@ -215,7 +215,7 @@ export function fetch( gateway, title, el, token, type ) {
  *
  * @param {mw.Title} title
  * @param {Element} el
- * @param {Event} event
+ * @param {ext.popups.PopupTriggerEvent} measurements
  * @param {Gateway} gateway
  * @param {Function} generateToken
  * @param {string} type

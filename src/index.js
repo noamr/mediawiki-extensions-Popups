@@ -130,7 +130,6 @@ function registerChangeListeners(
 	statsvTracker, eventLoggingTracker, pageviewTracker, callbackCurrentTimestamp
 ) {
 	registerChangeListener( store, changeListeners.footerLink( actions ) );
-	registerChangeListener( store, changeListeners.linkTitle() );
 	registerChangeListener( store, changeListeners.render( previewBehavior ) );
 	registerChangeListener(
 		store, changeListeners.statsv( registerActions, statsvTracker ) );
@@ -223,7 +222,6 @@ function registerChangeListeners(
 
 	const selectors = [];
 	if ( mw.user.isAnon() || mw.user.options.get( 'popups' ) === '1' ) {
-		const excludedLinksSelector = EXCLUDED_LINK_SELECTORS.join( ', ' );
 		selectors.push( `#mw-content-text a[href][title]:not(${excludedLinksSelector})` );
 	}
 	// TODO: Replace with mw.user.options.get( 'popupsreferencepreviews' ) === '1' when not in Beta
@@ -242,46 +240,89 @@ function registerChangeListeners(
 
 	rendererInit();
 
-	/*
-	 * Binding hover and click events to the eligible links to trigger actions
-	 */
-	$( document )
-		.on( 'mouseover keyup', validLinkSelector, function ( event ) {
-			const mwTitle = titleFromElement( this, mw.config );
-			if ( !mwTitle ) {
+	const eligibleElements = document.querySelectorAll( validLinkSelector );
+	const excludedLinksSelector = EXCLUDED_LINK_SELECTORS.join( ', ' );
+
+	const addPopupEventHandlers = target => {
+		// Disable default browser tooltip
+		let gateway
+		let type
+		const mwTitle = titleFromElement( target, mw.config );
+		if ( !mwTitle )
+			return;
+
+		if ( !mwTitle ) {
+			return;
+		}
+
+		target.removeAttribute('title');
+
+		const showPopup = ({clientX, clientY, clientRects}) => {
+			if (gateway === null) {
 				return;
 			}
-			const type = getPreviewType( this, mw.config, mwTitle );
-			let gateway;
 
-			switch ( type ) {
-				case previewTypes.TYPE_PAGE:
-					gateway = pagePreviewGateway;
-					break;
-				case previewTypes.TYPE_REFERENCE:
-					gateway = referenceGateway;
-					break;
-				default:
-					return;
+			if (typeof gateway === 'undefined' ) {
+				type = getPreviewType( target, mw.config, mwTitle );
+				switch ( type ) {
+					case previewTypes.TYPE_PAGE:
+						gateway = pagePreviewGateway;
+						break;
+					case previewTypes.TYPE_REFERENCE:
+						gateway = referenceGateway;
+						break;
+					default:
+						gateway = null;
+						return;
+				}
 			}
 
-			boundActions.linkDwell( mwTitle, this, event, gateway, generateToken, type );
-		} )
-		.on( 'mouseout blur', validLinkSelector, function () {
-			const mwTitle = titleFromElement( this, mw.config );
+			const event = {clientX, clientY, clientRects, pageXOffset, pageYOffset, target};
+			boundActions.linkDwell( mwTitle, target, event, gateway, generateToken, type );			
+		};
 
+		const hidePopup = () => {
 			if ( mwTitle ) {
 				boundActions.abandon();
 			}
-		} )
-		.on( 'click', validLinkSelector, function () {
-			const mwTitle = titleFromElement( this, mw.config );
+		};
+
+		target.addEventListener('mouseover', event => {
+			const {clientX, clientY} = event;
+			const clientRects = target.getClientRects();
+			showPopup({
+				clientX, clientY, clientRects,
+				pageXOffset, pageYOffset
+			});
+		});
+
+		target.addEventListener( 'keyup', event => {
+			const {target} = event;
+			const clientRects = target.getClientRects();
+			const [firstClientRect] = clientRects
+			showPopup({
+				clientX: firstClientRect.left + firstClientRect.width / 2,
+				clientY: firstClientRect.top + firstClientRect.height / 2,
+				clientRects: [firstClientRect],
+				pageXOffset, pageYOffset
+			});
+		});
+
+		target.addEventListener( 'blur', hidePopup );
+		target.addEventListener( 'mouseout', hidePopup );
+		target.addEventListener( 'click', event => {
+			const mwTitle = titleFromElement( target, mw.config );
 			if ( mwTitle ) {
-				if ( previewTypes.TYPE_PAGE === getPreviewType( this, mw.config, mwTitle ) ) {
-					boundActions.linkClick( this );
+				if ( previewTypes.TYPE_PAGE === getPreviewType( target, mw.config, mwTitle ) ) {
+					boundActions.linkClick( target );
 				}
 			}
 		} );
+	}
+
+	Array.from( eligibleElements )
+		.filter( element => !element.matches(excludedLinksSelector) )
+		.forEach( addPopupEventHandlers )
 }() );
 
 window.Redux = Redux;
