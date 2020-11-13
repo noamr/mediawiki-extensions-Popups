@@ -94,81 +94,8 @@ export function createThumbnail( rawThumbnail ) {
 	}
 
 	const isNarrow = tall && thumbWidth < SIZES.portraitImage.w;
-
-	return {
-		el: createThumbnailElement(
-			tall ? 'mwe-popups-landscape' : 'mwe-popups-portrait',
-			rawThumbnail.source,
-			x,
-			y,
-			thumbWidth,
-			thumbHeight,
-			width,
-			height
-		),
-		isTall: tall,
-		isNarrow,
-		offset: isNarrow ? SIZES.portraitImage.w - thumbWidth : 0,
-		width: thumbWidth,
-		height: thumbHeight
-	};
-}
-
-/**
- * Creates the SVG image element that represents the thumbnail.
- *
- * This function is distinct from `createThumbnail` as it abstracts away some
- * browser issues that are uncovered when manipulating elements across
- * namespaces.
- *
- * @param {string} className
- * @param {string} url
- * @param {number} x
- * @param {number} y
- * @param {number} thumbnailWidth
- * @param {number} thumbnailHeight
- * @param {number} width
- * @param {number} height
- * @return {JQuery}
- */
-export function createThumbnailElement(
-	className, url, x, y, thumbnailWidth, thumbnailHeight, width, height
-) {
-	const nsSvg = 'http://www.w3.org/2000/svg',
-		nsXlink = 'http://www.w3.org/1999/xlink';
-
-	// We want to visually separate the image from the summary
-	// Given we use an SVG mask, we cannot rely on border to do this
-	// and instead must insert a polyline element to visually separate
-	const line = document.createElementNS( nsSvg, 'polyline' );
-	const isTall = className.indexOf( 'not-tall' ) === -1;
-	const points = isTall ? [ 0, 0, 0, height ] :
-		[ 0, height - 1, width, height - 1 ];
-
-	line.setAttribute( 'stroke', 'rgba(0,0,0,0.1)' );
-	line.setAttribute( 'points', points.join( ' ' ) );
-	line.setAttribute( 'stroke-width', 1 );
-
-	const $thumbnailSVGImage = $( document.createElementNS( nsSvg, 'image' ) );
-	$thumbnailSVGImage[ 0 ].setAttributeNS( nsXlink, 'href', url );
-	// eslint-disable-next-line mediawiki/class-doc
-	$thumbnailSVGImage
-		.addClass( className )
-		.attr( {
-			x,
-			y,
-			width: thumbnailWidth,
-			height: thumbnailHeight
-		} );
-
-	const $thumbnail = $( document.createElementNS( nsSvg, 'svg' ) )
-		.attr( {
-			xmlns: nsSvg,
-			width,
-			height
-		} )
-		.append( $thumbnailSVGImage );
-
-	$thumbnail.append( line );
-	return $thumbnail;
+	const el = document.createElement('img');
+	el.className = 'mwe-popups-thumbnail';
+	el.src = rawThumbnail.source;
+	return {el: $(el), isTall: tall, isNarrow, width: thumbWidth, height: thumbHeight};
 }

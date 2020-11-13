@@ -22,7 +22,6 @@ import { text, select, number, object } from '@storybook/addon-knobs';
 /**
  * Popups dependencies
  */
-import { createPointerMasks } from '../../src/ui/renderer.js';
 import { convertPageToModel } from '../../src/gateway/rest.js';
 import { parseHTMLResponse } from '../../src/gateway/restFormatters.js';
 import { default as CONSTANTS } from '../../src/constants';
@@ -33,11 +32,6 @@ import { default as CONSTANTS } from '../../src/constants';
 import MODELS from '../mocks/models';
 import grid from '../helpers/grid';
 import createPopup from '../helpers/createPopup';
-
-/**
- * SVG Assets
- */
-import pointerMaskSVG from '../../src/ui/pointer-mask.svg';
 
 const popupsCSS = {
 		ltr: PopupsCSSString,
@@ -134,7 +128,6 @@ function useApiOrInitModel( ApiValue, initModel, thumbnailSize, ApiParser ) {
 /**
  * Global DOM manipulations
  */
-createPointerMasks( document.body );
 insertPopupsStyleElement();
 modifyStorybookHead( 'en', 'ltr' );
 /**

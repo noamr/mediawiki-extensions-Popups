@@ -98,10 +98,12 @@
 		overflow: hidden;	
 		background: #fff;
 	}
-	filter: drop-shadow(0 2px 0 @borderColorPopup) drop-shadow(0 -2px 0 @borderColorPopup) ;
 
-//	filter: drop-shadow(0 30px -20px @borderColorPopup);
-	//	.box-shadow( 0 50px 90px -20px rgba( 0, 0, 0, 0.3 ), 0 0 1px 1px @borderColorPopup; );
+	.mwe-popups-thumbnail {
+		object-fit: cover;
+	}
+
+	filter: drop-shadow(0 2px 0 @borderColorPopup) drop-shadow(0 -2px 0 @borderColorPopup) ;
 
 	.mw-ui-icon {
 		// mw-ui-icon assumes a font size of 16px so we must declare it here
@@ -138,9 +140,19 @@
 		.mwe-popups-discreet {
 			grid-area: ~"1 / 2 / 3 / 3";
 		}
+
+		.mwe-popups-thumbnail {
+			width: 250px;
+			height: 250px;
+		}
 	}
 
 	&.mwe-popups-portrait {
+		.mwe-popups-thumbnail {
+			width: 320px;
+			height: 200px;
+		}
+
 		.mwe-popups-extract {
 			grid-area: ~"2 / 1 / 4 / 2";
 		}

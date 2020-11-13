@@ -18,17 +18,13 @@ function createPopup( model, layout ) {
 	}
 
 	const preview = createPreviewWithType( model );
-
-	Object.assign( layout, { dir: model.languageDirection } );
 	layoutPreview(
 		preview,
-		layout,
+		{...layout, dir: model.languageDirection },
 		getClasses( preview, {
 			flippedX: layout.flippedX,
 			flippedY: layout.flippedY
-		} ),
-		SIZES.landscapeImage.h,
-		POINTER_SIZE
+		} )
 	);
 	return preview.el[ 0 ].outerHTML;
 }

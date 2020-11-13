@@ -3,7 +3,6 @@
  */
 
 import wait from '../wait';
-import pointerMaskSVG from './pointer-mask.svg';
 import { SIZES, createThumbnail } from './thumbnail';
 import { previewTypes } from '../preview/model';
 import { renderPreview } from './templates/preview/preview';
@@ -12,31 +11,6 @@ import { renderPagePreview } from './templates/pagePreview/pagePreview';
 
 const $window = $( window );
 
-/**
- * Extracted from `mw.popups.createSVGMasks`. This is just an SVG mask to point
- * or "point" at the link that's hovered over. The "pointer" appears to be cut
- * out of the image itself:
- *   _______                  link
- *  |       |    _/\_____     _/\____ <-- Pointer pointing at link
- *  |  :-]  | + |xxxxxxx   = |  :-]  |
- *  |_______|   |xxxxxxx     |_______|
- *              :
- *  Thumbnail    Pointer     Page preview
- *    image     clip-path   bubble w/ pointer
- *
- * SVG masks are used in place of CSS masks for browser support issues (see
- * https://caniuse.com/#feat=css-masks).
- *
- * @private
- * @param {Object} container DOM object to which pointer masks are appended
- * @return {void}
- */
-export function createPointerMasks( container ) {
-	$( '<div>' )
-		.attr( 'id', 'mwe-popups-svg' )
-		.html( pointerMaskSVG )
-		.appendTo( container );
-}
 
 /**
  * Initializes the renderer.
@@ -44,7 +18,6 @@ export function createPointerMasks( container ) {
  * @return {void}
  */
 export function init() {
-	createPointerMasks( document.body );
 }
 
 /**
@@ -247,18 +220,27 @@ function createReferencePreview( model ) {
 export function show(
 	preview, event, $link, behavior, token, container, dir
 ) {
-	const layout = createLayout(
-		preview.isTall,
-		event,
+	const flippedX = event.clientX > event.innerWidth / 2;
+	const flippedY = event.clientY > event.innerHeight / 2;
+	const offsetCorrection = event.eventType === 'mouse' ? 18 : 0;
+
+	const layout = {
+		top: event.clientRect.top + event.pageYOffset,
+		bottom: event.clientRect.bottom + event.pageYOffset,
+		pageX: event.clientX + event.pageXOffset + (flippedX ? offsetCorrection : -offsetCorrection),
+		flippedX: dir === 'rtl' ? !flippedX : flippedX,
+		flippedY,
 		dir
-	);
+	};
+
+	const classes = getClasses(preview, layout);
 
 	const previewElement = preview.el[0]
-
-	layoutPreview(
-		preview, layout, getClasses( preview, layout ),
-		SIZES.landscapeImage.h
-	);
+	const {el, isTall, hasThumbnail, thumbnail} = preview;
+	el.css('--link-top', `${Math.round(layout.top)}px`)
+		.css('--link-bottom', `${Math.round(layout.bottom)}px`)
+		.css('--offset-x', `${layout.pageX}px`)
+		.addClass( classes.join( ' ' ) );
 
 	container.appendChild(previewElement);
 
@@ -330,27 +312,6 @@ export function hide( {el} ) {
  */
 
 /**
- * @param {boolean} isLandscape
- * @param {ext.popups.PopupTriggerEvent} eventData Data related to the event that triggered showing
- * @param {string} dir 'ltr' if left-to-right, 'rtl' if right-to-left.
- * @return {ext.popups.PreviewLayout}
- */
-export function createLayout(isLandscape, eventData, dir) {
-	const flippedX = eventData.clientX > eventData.innerWidth / 2;
-	const flippedY = eventData.clientY > eventData.innerHeight / 2;
-	const offsetCorrection = eventData.eventType === 'mouse' ? 18 : 0;
-
-	return {
-		top: eventData.clientRect.top + eventData.pageYOffset,
-		bottom: eventData.clientRect.bottom + eventData.pageYOffset,
-		pageX: eventData.clientX + eventData.pageXOffset + (flippedX ? offsetCorrection : -offsetCorrection),
-		flippedX: dir === 'rtl' ? !flippedX : flippedX,
-		flippedY,
-		dir
-	};
-}
-
-/**
  * Generates a list of declarative CSS classes that represent the layout of
  * the preview.
  *
@@ -385,102 +346,4 @@ export function getClasses( preview, layout ) {
 	}
 
 	return classes;
-}
-
-/**
- * Lays out the preview given the layout.
- *
- * If the thumbnail is landscape and isn't the full height of the thumbnail
- * container, then pull the extract up to keep whitespace consistent across
- * previews.
- *
- * @param {ext.popups.Preview} preview
- * @param {ext.popups.PreviewLayout} layout
- * @param {string[]} classes class names used for layout out the preview
- * @param {number} predefinedLandscapeImageHeight landscape image height
- * @param {number} pointerSpaceSize
- * @return {void}
- */
-export function layoutPreview(
-	preview, layout, classes, predefinedLandscapeImageHeight
-) {
-	const {el, isTall, hasThumbnail, thumbnail} = preview;
-	el.css('--link-top', `${Math.round(layout.top)}px`)
-		.css('--link-bottom', `${Math.round(layout.bottom)}px`)
-		.css('--offset-x', `${layout.pageX}px`)
-		.addClass( classes.join( ' ' ) );
-}
-
-/**
- * Sets the thumbnail SVG clip-path.
- *
- * If the preview should be oriented differently, then the pointer is updated,
- * e.g. if the preview should be flipped vertically, then the pointer is
- * removed.
- *
- * Note: SVG clip-paths are supported everywhere but clip-paths as CSS
- * properties are not (https://caniuse.com/#feat=css-clip-path). For this
- * reason, RTL flipping is handled in JavaScript instead of CSS.
- *
- * @param {ext.popups.Preview} preview
- * @param {ext.popups.PreviewLayout} layout
- * @return {void}
- */
-export function setThumbnailClipPath(
-	{ el, isTall, thumbnail }, { flippedY, flippedX, dir }
-) {
-	const maskID = getThumbnailClipPathID( isTall, flippedY, flippedX );
-	if ( maskID ) {
-		// CSS matrix transform entries:
-		// ⎡ sx c tx ⎤
-		// ⎣ sy d ty ⎦
-		const matrix = {
-			scaleX: 1,
-			// moving the mask horizontally if the image is less than the maximum width
-			translateX: isTall ? Math.min( thumbnail.width - SIZES.portraitImage.w, 0 ) : 0
-		};
-
-		if ( dir === 'rtl' ) {
-			// flipping the mask horizontally
-			matrix.scaleX = -1;
-			// moving the mask horizontally to the max width of the thumbnail
-			matrix.translateX = isTall ? SIZES.portraitImage.w : SIZES.landscapeImage.w;
-		}
-
-		// Transform the clip-path not the image it is applied to.
-		const mask = document.getElementById( maskID );
-		mask.setAttribute(
-			'transform',
-			`matrix(${matrix.scaleX} 0 0 1 ${matrix.translateX} 0)`
-		);
-
-		el.find( 'image' )[ 0 ]
-			.setAttribute( 'clip-path', `url(#${maskID})` );
-	}
-}
-
-/**
- * Gets the thumbnail SVG clip-path element ID as specified in pointer-mask.svg.
- *
- * @param {boolean} isTall Sugar around
- *  `preview.hasThumbnail && thumbnail.isTall`
- * @param {boolean} flippedY
- * @param {boolean} flippedX
- * @return {string|undefined}
- */
-export function getThumbnailClipPathID( isTall, flippedY, flippedX ) {
-	// Clip-paths are only needed when the pointer is in a corner that is covered by the thumbnail.
-	// This is only the case in 4 of 8 situations:
-	if ( !isTall && !flippedY ) {
-		// 1. Landscape thumbnails cover the upper half of the popup. This is only the case when the
-		// pointer is not flipped to the bottom.
-		return flippedX ? 'mwe-popups-mask-flip' : 'mwe-popups-mask';
-	} else if ( isTall && flippedX ) {
-		// 2. Tall thumbnails cover the right half of the popup. This is only the case when the
-		// pointer is flipped to the right.
-		return flippedY ? 'mwe-popups-landscape-mask-flip' : 'mwe-popups-landscape-mask';
-	}
-
-	// The 4 combinations not covered above don't need a clip-path.
-	return undefined;
 }
