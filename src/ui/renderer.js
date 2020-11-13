@@ -255,25 +255,24 @@ export function show(
 
 	const previewElement = preview.el[0]
 
-	container.appendChild(previewElement)
-
 	layoutPreview(
 		preview, layout, getClasses( preview, layout ),
 		SIZES.landscapeImage.h
 	);
 
+	container.appendChild(previewElement);
 
 	// Trigger fading effect for reference previews after the popup has been rendered
 	if ( previewElement.classList.contains( 'mwe-popups-type-reference' ) ) {
 		$(previewElement.querySelector('.mwe-popups-scroll')).trigger( 'scroll' );
 	}
 
-	requestAnimationFrame(() => {
+	requestAnimationFrame(setTimeout(() => {
 		previewElement.addEventListener('transitionend', () => {
 			bindBehavior(preview, behavior);
 		});
 		previewElement.removeAttribute('aria-hidden');
-	})
+	}));
 }
 
 /**
@@ -305,25 +304,15 @@ export function bindBehavior( preview, behavior ) {
  * @return {JQuery.Promise<void>} A promise that resolves when the preview has
  *                                faded out.
  */
-export function hide( preview ) {
-	// FIXME: This method clearly needs access to the layout of the preview.
-	const fadeInClass = ( preview.el.hasClass( 'mwe-popups-fade-in-up' ) ) ?
-		'mwe-popups-fade-in-up' :
-		'mwe-popups-fade-in-down';
-
-	const fadeOutClass = ( fadeInClass === 'mwe-popups-fade-in-up' ) ?
-		'mwe-popups-fade-out-down' :
-		'mwe-popups-fade-out-up';
-
-	// Classes documented above
-	// eslint-disable-next-line mediawiki/class-doc
-	preview.el
-		.removeClass( fadeInClass )
-		.addClass( fadeOutClass );
-
-	return wait( 150 ).then( () => {
-		preview.el.remove();
-	} );
+export function hide( {el} ) {
+	const [element] = el;
+	return new Promise(resolve => {
+		element.setAttribute('aria-hidden', 'aria-hidden');
+		element.addEventListener('transitionend', () => {
+			element.remove();
+		});
+		resolve();
+	});
 }
 
 /**
@@ -415,16 +404,10 @@ export function getClasses( preview, layout ) {
 export function layoutPreview(
 	preview, layout, classes, predefinedLandscapeImageHeight
 ) {
-	const popup = preview.el,
-		isTall = preview.isTall,
-		hasThumbnail = preview.hasThumbnail,
-		thumbnail = preview.thumbnail,
-		flippedY = layout.flippedY;
+	const {isTall, hasThumbnail, thumbnail} = preview;
+	const popup = preview.el;
 
-	if (
-		!flippedY && !isTall && hasThumbnail &&
-			thumbnail.height < predefinedLandscapeImageHeight
-	) {
+	if (!layout.flippedY && !isTall && hasThumbnail && thumbnail.height < predefinedLandscapeImageHeight) {
 		popup.css('--pointer-margin', `calc(${thumbnail.height}px - var(--pointer-size)`);
 	}
 

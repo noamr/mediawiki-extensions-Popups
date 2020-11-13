@@ -277,7 +277,7 @@ function registerChangeListeners(
 		const hidePopup = () =>  boundActions.abandon();
 
 		const getNearestClientRect = (rects, y) => 
-			Array.from(rects).reduce((result, rect) => {
+			rects.length === 1 ? rects[0] : Array.from(rects).reduce((result, rect) => {
 				const deltaY = Math.abs(y - rect.top + y - rect.bottom);
 				return result.deltaY < deltaY ? result : {rect, deltaY};
 			}, {rect: null, deltaY: Number.MAX_VALUE}).rect;
