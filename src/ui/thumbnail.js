@@ -97,7 +97,7 @@ export function createThumbnail( rawThumbnail ) {
 
 	return {
 		el: createThumbnailElement(
-			tall ? 'mwe-popups-is-tall' : 'mwe-popups-is-not-tall',
+			tall ? 'mwe-popups-landscape' : 'mwe-popups-portrait',
 			rawThumbnail.source,
 			x,
 			y,

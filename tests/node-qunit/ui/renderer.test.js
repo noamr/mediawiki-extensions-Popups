@@ -787,7 +787,7 @@ QUnit.test( '#getClasses when no thumbnail is available', ( assert ) => {
 			[
 				'mwe-popups-fade-in-up',
 				'mwe-popups-no-image-pointer',
-				'mwe-popups-is-not-tall'
+				'mwe-popups-portrait'
 			],
 			'No flip.'
 		],
@@ -802,8 +802,8 @@ QUnit.test( '#getClasses when no thumbnail is available', ( assert ) => {
 			},
 			[
 				'mwe-popups-fade-in-down',
-				'flipped-y',
-				'mwe-popups-is-not-tall'
+				'placement-above-after',
+				'mwe-popups-portrait'
 			],
 			'Y flipped.'
 		],
@@ -818,9 +818,9 @@ QUnit.test( '#getClasses when no thumbnail is available', ( assert ) => {
 			},
 			[
 				'mwe-popups-fade-in-up',
-				'flipped-x',
+				'placement-below-before',
 				'mwe-popups-no-image-pointer',
-				'mwe-popups-is-not-tall'
+				'mwe-popups-portrait'
 			],
 			'X flipped.'
 		],
@@ -835,8 +835,8 @@ QUnit.test( '#getClasses when no thumbnail is available', ( assert ) => {
 			},
 			[
 				'mwe-popups-fade-in-down',
-				'flipped-x-y',
-				'mwe-popups-is-not-tall'
+				'placement-above-before',
+				'mwe-popups-portrait'
 			],
 			'X and Y flipped.'
 		]
@@ -864,7 +864,7 @@ QUnit.test( '#getClasses when a non-tall thumbnail is available', ( assert ) => 
 			[
 				'mwe-popups-fade-in-up',
 				'mwe-popups-image-pointer',
-				'mwe-popups-is-not-tall'
+				'mwe-popups-portrait'
 			],
 			'No flip.'
 		],
@@ -879,8 +879,8 @@ QUnit.test( '#getClasses when a non-tall thumbnail is available', ( assert ) => 
 			},
 			[
 				'mwe-popups-fade-in-down',
-				'flipped-y',
-				'mwe-popups-is-not-tall'
+				'placement-above-after',
+				'mwe-popups-portrait'
 			],
 			'Y flipped.'
 		],
@@ -895,9 +895,9 @@ QUnit.test( '#getClasses when a non-tall thumbnail is available', ( assert ) => 
 			},
 			[
 				'mwe-popups-fade-in-up',
-				'flipped-x',
+				'placement-below-before',
 				'mwe-popups-image-pointer',
-				'mwe-popups-is-not-tall'
+				'mwe-popups-portrait'
 			],
 			'X flipped.'
 		],
@@ -912,8 +912,8 @@ QUnit.test( '#getClasses when a non-tall thumbnail is available', ( assert ) => 
 			},
 			[
 				'mwe-popups-fade-in-down',
-				'flipped-x-y',
-				'mwe-popups-is-not-tall'
+				'placement-above-before',
+				'mwe-popups-portrait'
 			],
 			'X and Y flipped.'
 		]
@@ -942,7 +942,7 @@ QUnit.test( '#getClasses when a tall thumbnail is available', ( assert ) => {
 			[
 				'mwe-popups-fade-in-up',
 				'mwe-popups-no-image-pointer',
-				'mwe-popups-is-tall'
+				'mwe-popups-landscape'
 			],
 			'No flip.'
 		],
@@ -957,8 +957,8 @@ QUnit.test( '#getClasses when a tall thumbnail is available', ( assert ) => {
 			},
 			[
 				'mwe-popups-fade-in-down',
-				'flipped-y',
-				'mwe-popups-is-tall'
+				'placement-above-after',
+				'mwe-popups-landscape'
 			],
 			'Y flipped.'
 		],
@@ -973,8 +973,8 @@ QUnit.test( '#getClasses when a tall thumbnail is available', ( assert ) => {
 			},
 			[
 				'mwe-popups-fade-in-up',
-				'flipped-x',
-				'mwe-popups-is-tall'
+				'placement-below-before',
+				'mwe-popups-landscape'
 			],
 			'X flipped.'
 		],
@@ -989,8 +989,8 @@ QUnit.test( '#getClasses when a tall thumbnail is available', ( assert ) => {
 			},
 			[
 				'mwe-popups-fade-in-down',
-				'flipped-x-y',
-				'mwe-popups-is-tall'
+				'placement-above-before',
+				'mwe-popups-landscape'
 			],
 			'X and Y flipped.'
 		]

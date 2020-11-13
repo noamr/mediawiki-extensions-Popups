@@ -266,13 +266,13 @@ export function show(
 	if ( previewElement.classList.contains( 'mwe-popups-type-reference' ) ) {
 		$(previewElement.querySelector('.mwe-popups-scroll')).trigger( 'scroll' );
 	}
-
-	requestAnimationFrame(setTimeout(() => {
+	
+	setTimeout(() => {
 		previewElement.addEventListener('transitionend', () => {
 			bindBehavior(preview, behavior);
-		});
+		}, {once: true});
 		previewElement.removeAttribute('aria-hidden');
-	}));
+	});
 }
 
 /**
@@ -310,8 +310,8 @@ export function hide( {el} ) {
 		element.setAttribute('aria-hidden', 'aria-hidden');
 		element.addEventListener('transitionend', () => {
 			element.remove();
-		});
-		resolve();
+			resolve();
+		}, {once: true});
 	});
 }
 
@@ -362,11 +362,11 @@ export function getClasses( preview, layout ) {
 	const classes = [];
 
 	if ( layout.flippedY && layout.flippedX ) {
-		classes.push( 'flipped-x-y' );
+		classes.push( 'placement-above-before' );
 	} else if ( layout.flippedY ) {
-		classes.push( 'flipped-y' );
+		classes.push( 'placement-above-after' );
 	} else if ( layout.flippedX ) {
-		classes.push( 'flipped-x' );
+		classes.push( 'placement-below-before' );
 	}
 
 	if ( ( !preview.hasThumbnail || preview.isTall && !layout.flippedX ) &&
@@ -379,9 +379,9 @@ export function getClasses( preview, layout ) {
 	}
 
 	if ( preview.isTall ) {
-		classes.push( 'mwe-popups-is-tall' );
+		classes.push( 'mwe-popups-landscape' );
 	} else {
-		classes.push( 'mwe-popups-is-not-tall' );
+		classes.push( 'mwe-popups-portrait' );
 	}
 
 	return classes;
@@ -404,22 +404,11 @@ export function getClasses( preview, layout ) {
 export function layoutPreview(
 	preview, layout, classes, predefinedLandscapeImageHeight
 ) {
-	const {isTall, hasThumbnail, thumbnail} = preview;
-	const popup = preview.el;
-
-	if (!layout.flippedY && !isTall && hasThumbnail && thumbnail.height < predefinedLandscapeImageHeight) {
-		popup.css('--pointer-margin', `calc(${thumbnail.height}px - var(--pointer-size)`);
-	}
-
-	popup.css('--link-top', `${Math.round(layout.top)}px`)
-		 .css('--link-bottom', `${Math.round(layout.bottom)}px`)
-		 .css('--offset-x', `${layout.pageX}px`);
-	// eslint-disable-next-line mediawiki/class-doc
-	popup.addClass( classes.join( ' ' ) );
-
-	if ( hasThumbnail ) {
-		setThumbnailClipPath( preview, layout );
-	}
+	const {el, isTall, hasThumbnail, thumbnail} = preview;
+	el.css('--link-top', `${Math.round(layout.top)}px`)
+		.css('--link-bottom', `${Math.round(layout.bottom)}px`)
+		.css('--offset-x', `${layout.pageX}px`)
+		.addClass( classes.join( ' ' ) );
 }
 
 /**

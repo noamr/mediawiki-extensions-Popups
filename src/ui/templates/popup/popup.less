@@ -17,20 +17,19 @@
 @borderColorPopupPointerNoImage: rgba( 0, 0, 0, 0.07 );
 
 .mwe-popups {
-	background: #fff;
 	position: absolute;
 	z-index: @zIndexPopup;
-	.box-shadow( 0 30px 90px -20px rgba( 0, 0, 0, 0.3 ), 0 0 1px 1px @borderColorPopup; );
 	padding: 0;
 	display: block;
 	font-size: 14px;
 	line-height: @lineHeight;
 	min-width: 300px;
 	border-radius: @borderRadius;
+	contain: layout paint;
 
 	--pointer-size: 8px;
 
-	top: ~"calc(var(--link-bottom) + var(--pointer-size))";
+	top: var(--link-bottom);
 	left: var(--offset-x);
 
 	transition: transform 0.2s ease, opacity 0.2s ease;
@@ -42,10 +41,67 @@
 		opacity: 0;
 		transform: translate(0, 20px);
 
-		&.flipped-y, &.flipped-x-y {
+		&.placement-above-after, &.placement-above-before {
 			transform: translate(0, -20px);
 		}
 	}
+
+	--balloon-pseudo-radius: 2px;
+	--balloon-pointer-offset: 18px;
+	--balloon-pointer-width: 16px;
+
+	--balloon-x1: 0;
+	--balloon-x2: var(--balloon-pseudo-radius);
+	--balloon-x3: ~"calc(var(--balloon-pointer-offset) - var(--balloon-pointer-width) / 2)";
+	--balloon-x4: var(--balloon-pointer-offset);
+	--balloon-x5: ~"calc(var(--balloon-pointer-offset) + var(--balloon-pointer-width) / 2)";
+	--balloon-x6: ~"calc(100% - var(--balloon-pseudo-radius))";
+	--balloon-x7: 100%;
+
+	--balloon-y1: 0;
+	--balloon-y2: var(--pointer-size);
+	--balloon-y3: ~"calc(var(--pointer-size) + var(--balloon-pseudo-radius))";
+	--balloon-y4: ~"calc(100% - var(--balloon-pseudo-radius))";
+	--balloon-y5: 100%;
+
+
+	&.placement-below-before, &.placement-above-before {
+		--balloon-x2: ~"calc(100% - var(--balloon-pseudo-radius))";
+		--balloon-x3: ~"calc(100% - var(--balloon-pointer-offset) + var(--balloon-pointer-width) / 2)";
+		--balloon-x4: ~"calc(100% - var(--balloon-pointer-offset))";
+		--balloon-x5: ~"calc(100% - var(--balloon-pointer-offset) - var(--balloon-pointer-width) / 2)";
+	}
+
+	&.placement-above-before, &.placement-above-after {
+		--balloon-y1: 100%;
+		--balloon-y2: ~"calc(100% - var(--pointer-size))";
+		--balloon-y3: ~"calc(100% - var(--pointer-size) - var(--balloon-pseudo-radius))";
+		--balloon-y4: var(--balloon-pseudo-radius);
+		--balloon-y5: 0;
+	}
+
+	.mwe-popups-container {
+		clip-path: polygon(
+			var(--balloon-x2) var(--balloon-y2),
+			var(--balloon-x3) var(--balloon-y2),
+			var(--balloon-x4) var(--balloon-y1),
+			var(--balloon-x5) var(--balloon-y2),
+			var(--balloon-x6) var(--balloon-y2),
+			var(--balloon-x7) var(--balloon-y3),
+			var(--balloon-x7) var(--balloon-y4),
+			var(--balloon-x6) var(--balloon-y5),
+			var(--balloon-x2) var(--balloon-y5),
+			var(--balloon-x1) var(--balloon-y4),
+			var(--balloon-x1) var(--balloon-y3)
+		);
+	
+		overflow: hidden;	
+		background: #fff;
+	}
+	filter: drop-shadow(0 2px 0 @borderColorPopup) drop-shadow(0 -2px 0 @borderColorPopup) ;
+
+//	filter: drop-shadow(0 30px -20px @borderColorPopup);
+	//	.box-shadow( 0 50px 90px -20px rgba( 0, 0, 0, 0.3 ), 0 0 1px 1px @borderColorPopup; );
 
 	.mw-ui-icon {
 		// mw-ui-icon assumes a font size of 16px so we must declare it here
@@ -62,17 +118,39 @@
 
 	.mwe-popups-container {
 		color: @colorText;
-		margin-top: -9px;
-		padding-top: 9px;
 		text-decoration: none;
+		display: grid;
+	}
+
+	.mwe-popups-discreet {
+		margin: -8px 0;
+	}
+
+	&.mwe-popups-landscape {
+		.mwe-popups-extract {
+			grid-area: ~"1 / 1 / 3 / 2";
+		}
 
 		footer {
-			padding: @popupPadding;
-			margin: 0;
-			font-size: 10px;
-			position: absolute;
-			bottom: 0;
-			left: 0;
+			grid-area: ~"2 / 1 / 3 / 2";
+		}
+
+		.mwe-popups-discreet {
+			grid-area: ~"1 / 2 / 3 / 3";
+		}
+	}
+
+	&.mwe-popups-portrait {
+		.mwe-popups-extract {
+			grid-area: ~"2 / 1 / 4 / 2";
+		}
+
+		footer {
+			grid-area: ~"3 / 1 / 4 / 2";
+		}
+
+		.mwe-popups-discreet {
+			grid-area: ~"1 / 1 / 2 / 2";
 		}
 	}
 
@@ -80,7 +158,7 @@
 		// T156800, T139297: "Pad" the extract horizontally using a margin so the
 		// SVG element is forced not to occlude the truncating pseudo-element and
 		// the settings cog in IE9-11.
-		margin: @popupPadding;
+		padding: @popupPadding;
 		display: block;
 		color: @colorText;
 		text-decoration: none;
@@ -105,22 +183,12 @@
 		&[ dir='ltr' ]:after {
 			/* @noflip */
 			right: 0;
-			/* @noflip */
-			background-image: -webkit-linear-gradient( to right, rgba( 255, 255, 255, 0 ), rgba( 255, 255, 255, 1 ) 50% );
-			/* @noflip */
-			background-image: -moz-linear-gradient( to right, rgba( 255, 255, 255, 0 ), rgba( 255, 255, 255, 1 ) 50% );
-			/* @noflip */
 			background-image: linear-gradient( to right, rgba( 255, 255, 255, 0 ), rgba( 255, 255, 255, 1 ) 50% );
 		}
 
 		&[ dir='rtl' ]:after {
 			/* @noflip */
 			left: 0;
-			/* @noflip */
-			background-image: -webkit-linear-gradient( to left, rgba( 255, 255, 255, 0 ), rgba( 255, 255, 255, 1 ) 50% );
-			/* @noflip */
-			background-image: -moz-linear-gradient( to left, rgba( 255, 255, 255, 0 ), rgba( 255, 255, 255, 1 ) 50% );
-			/* @noflip */
 			background-image: linear-gradient( to left, rgba( 255, 255, 255, 0 ), rgba( 255, 255, 255, 1 ) 50% );
 		}
 		/* stylelint-enable function-linear-gradient-no-nonstandard-direction */
@@ -141,34 +209,16 @@
 		}
 	}
 
-	svg {
-		overflow: hidden;
-	}
-
-	&.mwe-popups-is-tall {
+	&.mwe-popups-landscape {
 		width: 450px;
-
-		> div > a > svg {
-			vertical-align: middle;
-		}
-
 		.mwe-popups-extract {
 			width: @popupTallWidth;
 			height: 9 * @lineHeight;
 			overflow: hidden;
-			float: left;
-		}
-
-		footer {
-			width: @popupTallWidth;
-			&.mwe-popups-narrow-thumbnail {
-				width: calc(@popupTallWidth + var(--thumbnail-offset));
-			}
-			left: 0;
 		}
 	}
 
-	&.mwe-popups-is-not-tall {
+	&.mwe-popups-portrait {
 		width: @popupWidth;
 
 		.mwe-popups-extract {
@@ -179,11 +229,6 @@
 			overflow: hidden;
 			margin-bottom: @minHeight + 7px;
 			padding-bottom: 0;
-			margin-top: var(--pointer-margin, 0);
-		}
-
-		footer {
-			width: var(--extract-width, @popupWidth - @cogIconSize);
 		}
 	}
 
@@ -208,169 +253,21 @@
 			text-decoration: underline;
 		}
 	}
-
-	/* Triangles/Pointers */
-	&.mwe-popups-no-image-pointer {
-		&:before {
-			.mwe-popups-border-pointer-top( 8px, 10px, @borderColorPopupPointerNoImage, 0 );
-		}
-
-		&:after {
-			.mwe-popups-border-pointer-top( 7px, 7px, #fff, 4px );
-		}
+	
+	.mwe-popups-extract {
+		padding: @popupPadding;
 	}
 
-	&.flipped-x.mwe-popups-no-image-pointer {
-		&:before {
-			left: auto;
-			right: 10px;
-		}
-
-		&:after {
-			left: auto;
-			right: 7px;
-		}
-	}
-
-	&.mwe-popups-image-pointer {
-		&:before {
-			.mwe-popups-border-pointer-top( 9px, 9px, @colorGray10, 0 );
-			z-index: @zIndexBackground;
-		}
-
-		&:after {
-			.mwe-popups-border-pointer-top( 8px, 6px, #fff, 4px );
-			z-index: @zIndexForeground;
-		}
-
-		&.flipped-x {
-			&:before {
-				.mwe-popups-border-pointer-top( 9px, 293px, @colorGray10, 0 );
-			}
-
-			&:after {
-				.mwe-popups-border-pointer-top( 8px, 290px, #fff, 4px );
-			}
-		}
-
-		.mwe-popups-extract {
-			padding-top: @popupPadding;
-			// The number here should reflect landscapeImage.h
-			margin-top: 200px;
-		}
-
-		> div > a > svg {
-			margin-top: -8px;
-			position: absolute;
-			z-index: @zIndexThumbnailMask;
-			left: 0;
-		}
-	}
-
-	&.flipped-x.mwe-popups-is-tall {
+	&.mwe-popups-landscape {
 		min-height: 242px;
-
-		&:before {
-			.mwe-popups-border-pointer-top( 9px, 420px, @colorGray10, 0 );
-			z-index: @zIndexBackground;
-		}
-
-		> div > a > svg {
-			margin: 0;
-			margin-top: -8px;
-			margin-bottom: -7px;
-			position: absolute;
-			z-index: @zIndexThumbnailMask;
-			right: 0;
-		}
 	}
 
-	&.flipped-x-y {
-		&:before {
-			.mwe-popups-border-pointer-bottom( 9px, 293px, @colorGray10, 0 );
-			z-index: @zIndexBackground;
-		}
-
-		&:after {
-			.mwe-popups-border-pointer-bottom( 8px, 290px, #fff, 4px );
-			z-index: @zIndexForeground;
-		}
-
-		&.mwe-popups-is-tall {
-			min-height: 242px;
-
-			&:before {
-				.mwe-popups-border-pointer-bottom( 9px, 420px, @colorGray10, 0 );
-			}
-
-			&:after {
-				.mwe-popups-border-pointer-bottom( 8px, 417px, #fff, 4px );
-			}
-
-			> div > a > svg {
-				margin: 0;
-				margin-bottom: -9px;
-				position: absolute;
-				z-index: @zIndexThumbnailMask;
-				right: 0;
-			}
-		}
-	}
-
-	&.flipped-x, &.flipped-x-y {
+	&.placement-below-before, &.placement-above-before {
 		left: auto;
 		right: ~"calc(100% - var(--offset-x))";
 	}
-	&.flipped-y, &.flipped-x-y {
+	&.placement-above-after, &.placement-above-before {
 		top: auto;
-		bottom: ~"calc(100% - var(--link-top) + 8px)";
-	}
-
-	&.flipped-y {
-
-		&:before {
-			.mwe-popups-border-pointer-bottom( 8px, 10px, @colorGray10, 0 );
-		}
-
-		&:after {
-			.mwe-popups-border-pointer-bottom( 7px, 7px, #fff, 4px );
-		}
-	}
-}
-
-// Position the SVG border
-.mwe-popups-is-tall {
-	polyline {
-		.mwe-popups-translate( 0, 0 );
-	}
-
-	&.flipped-x-y {
-		polyline {
-			.mwe-popups-translate( 0, -8px );
-		}
-	}
-
-	&.flipped-x {
-		polyline {
-			.mwe-popups-translate( 0, 8px );
-		}
-	}
-}
-
-.rtl .mwe-popups-is-tall {
-	polyline {
-		.mwe-popups-translate( -100%, 0 );
-	}
-
-	&.flipped-x-y {
-		polyline {
-			.mwe-popups-translate( -100%, -8px );
-		}
-	}
-
-	&.flipped-x {
-		polyline {
-			.mwe-popups-translate( -100%, 8px );
-		}
+		bottom: ~"calc(100% - var(--link-top))";
 	}
 }
