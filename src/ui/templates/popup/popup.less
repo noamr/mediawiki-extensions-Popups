@@ -33,8 +33,18 @@
 	top: ~"calc(var(--link-bottom) + var(--pointer-size))";
 	left: var(--offset-x);
 
+	transition: transform 0.2s ease, opacity 0.2s ease;
+
+	transform: none;
+	opacity: 1;
+
 	&[aria-hidden] {
-		display: none;
+		opacity: 0;
+		transform: translate(0, 20px);
+
+		&.flipped-y, &.flipped-x-y {
+			transform: translate(0, -20px);
+		}
 	}
 
 	.mw-ui-icon {

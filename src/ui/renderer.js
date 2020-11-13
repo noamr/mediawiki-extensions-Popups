@@ -262,14 +262,18 @@ export function show(
 		SIZES.landscapeImage.h
 	);
 
-	previewElement.removeAttribute('aria-hidden');
 
 	// Trigger fading effect for reference previews after the popup has been rendered
 	if ( previewElement.classList.contains( 'mwe-popups-type-reference' ) ) {
 		$(previewElement.querySelector('.mwe-popups-scroll')).trigger( 'scroll' );
 	}
 
-	return Promise.race([wait(200), new Promise(() => bindBehavior(preview, behavior))]);
+	requestAnimationFrame(() => {
+		previewElement.addEventListener('transitionend', () => {
+			bindBehavior(preview, behavior);
+		});
+		previewElement.removeAttribute('aria-hidden');
+	})
 }
 
 /**
@@ -367,12 +371,6 @@ export function createLayout(isLandscape, eventData, dir) {
  */
 export function getClasses( preview, layout ) {
 	const classes = [];
-
-	if ( layout.flippedY ) {
-		classes.push( 'mwe-popups-fade-in-down' );
-	} else {
-		classes.push( 'mwe-popups-fade-in-up' );
-	}
 
 	if ( layout.flippedY && layout.flippedX ) {
 		classes.push( 'flipped-x-y' );
