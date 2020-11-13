@@ -229,18 +229,18 @@ export function show(
 		bottom: event.clientRect.bottom + event.pageYOffset,
 		pageX: event.clientX + event.pageXOffset + (flippedX ? offsetCorrection : -offsetCorrection),
 		flippedX: dir === 'rtl' ? !flippedX : flippedX,
-		flippedY,
 		dir
 	};
 
-	const classes = getClasses(preview, layout);
-
 	const previewElement = preview.el[0]
-	const {el, isTall, hasThumbnail, thumbnail} = preview;
-	el.css('--link-top', `${Math.round(layout.top)}px`)
-		.css('--link-bottom', `${Math.round(layout.bottom)}px`)
-		.css('--offset-x', `${layout.pageX}px`)
-		.addClass( classes.join( ' ' ) );
+	const {isTall, hasThumbnail, thumbnail} = preview;
+	const {style, dataset} = previewElement;
+	style.setProperty('--link-top', `${Math.round(layout.top)}px`);
+	style.setProperty('--link-bottom', `${Math.round(layout.bottom)}px`);
+	style.setProperty('--offset-x', `${layout.pageX}px`);
+	dataset.orientation = preview.isTall ? 'landscape' : 'portrait';
+	dataset.placement = flippedY ? 'above' : 'below';
+	dataset.alignment = layout.flippedX ? 'left' : 'right';
 
 	container.appendChild(previewElement);
 
@@ -251,7 +251,7 @@ export function show(
 	
 	setTimeout(() => {
 		previewElement.addEventListener('transitionend', () => {
-			bindBehavior(preview, behavior);
+			bindBehavior(previewElement, behavior);
 		}, {once: true});
 		previewElement.removeAttribute('aria-hidden');
 	});
@@ -260,23 +260,20 @@ export function show(
 /**
  * Binds the behavior to the interactive elements of the preview.
  *
- * @param {ext.popups.Preview} preview
+ * @param {HTMLElement} element
  * @param {ext.popups.PreviewBehavior} behavior
  * @return {void}
  */
-export function bindBehavior( preview, behavior ) {
-	preview.el.on( 'mouseenter', behavior.previewDwell )
-		.on( 'mouseleave', behavior.previewAbandon );
-
-	preview.el.click( behavior.click );
-
-	preview.el.find( '.mwe-popups-settings-icon' )
-		.attr( 'href', behavior.settingsUrl )
-		.click( ( event ) => {
-			event.stopPropagation();
-
-			behavior.showSettings( event );
-		} );
+export function bindBehavior( element, behavior ) {
+	element.addEventListener('mouseenter', behavior.previewDwell);
+	element.addEventListener('mouseleave', behavior.previewAbandon);
+	element.addEventListener('click', behavior.click);
+	const settingsIcon = element.querySelector('.mwe-popups-settings-icon');
+	settingsIcon.setAttribute('href', behavior.settingsUrl);
+	settingsIcon.addEventListener('click', event => {
+		event.stopPropagation();
+		behavior.showSettings( event );
+	});
 }
 
 /**
@@ -295,55 +292,4 @@ export function hide( {el} ) {
 			resolve();
 		}, {once: true});
 	});
-}
-
-/**
- * Represents the layout of a preview, which consists of a position (`offset`)
- * and whether or not the preview should be flipped horizontally or
- * vertically (`flippedX` and `flippedY` respectively).
- *
- * @typedef {Object} ext.popups.PreviewLayout
- * @property {number} top
- * @property {number} bottom
- * @property {number} pageX
- * @property {boolean} flippedX
- * @property {boolean} flippedY
- * @property {string} dir 'ltr' if left-to-right, 'rtl' if right-to-left.
- */
-
-/**
- * Generates a list of declarative CSS classes that represent the layout of
- * the preview.
- *
- * @param {ext.popups.Preview} preview
- * @param {ext.popups.PreviewLayout} layout
- * @return {string[]}
- */
-export function getClasses( preview, layout ) {
-	const classes = [];
-
-	if ( layout.flippedY && layout.flippedX ) {
-		classes.push( 'placement-above-before' );
-	} else if ( layout.flippedY ) {
-		classes.push( 'placement-above-after' );
-	} else if ( layout.flippedX ) {
-		classes.push( 'placement-below-before' );
-	}
-
-	if ( ( !preview.hasThumbnail || preview.isTall && !layout.flippedX ) &&
-		!layout.flippedY ) {
-		classes.push( 'mwe-popups-no-image-pointer' );
-	}
-
-	if ( preview.hasThumbnail && !preview.isTall && !layout.flippedY ) {
-		classes.push( 'mwe-popups-image-pointer' );
-	}
-
-	if ( preview.isTall ) {
-		classes.push( 'mwe-popups-landscape' );
-	} else {
-		classes.push( 'mwe-popups-portrait' );
-	}
-
-	return classes;
 }
