@@ -249,10 +249,11 @@ export function show(
 		$(previewElement.querySelector('.mwe-popups-scroll')).trigger( 'scroll' );
 	}
 	
+	previewElement.addEventListener('transitionend', () => {
+		bindBehavior(previewElement, behavior);
+	}, {once: true});
+
 	setTimeout(() => {
-		previewElement.addEventListener('transitionend', () => {
-			bindBehavior(previewElement, behavior);
-		}, {once: true});
 		previewElement.removeAttribute('aria-hidden');
 	});
 }
@@ -288,7 +289,7 @@ export function hide( {el} ) {
 	return new Promise(resolve => {
 		element.setAttribute('aria-hidden', 'aria-hidden');
 		element.addEventListener('transitionend', () => {
-			element.remove();
+//			element.remove();
 			resolve();
 		}, {once: true});
 	});

@@ -23,20 +23,14 @@ export function renderPreview(
 	const title = escapeHTML( model.title );
 	extractMsg = escapeHTML( extractMsg );
 	linkMsg = escapeHTML( linkMsg );
-
 	const preview = cloneFragment();
 	const titleElement = preview.querySelector('.mwe-popups-title');
-	const linkElement = preview.querySelector('.mw-popups-read-link')
+	const linkElement = preview.querySelector('.mwe-popups-read-link')
 	preview.querySelector('.mw-ui-icon').classList.add(`mw-ui-icon-preview-${model.type}`);
-	if (showTitle) {
-		title.innerHTML = title;
-	} else {
-		titleElement.remove();
-	}
-
-	preview.querySelector('.mw-popups-extract').setAttribute('href', model.url);
-	preview.querySelector('.mw-popups-message').innerHTML = extractMsg;	
+	titleElement.innerHTML = showTitle ? title : '';
+	preview.querySelector('.mwe-popups-extract').setAttribute('href', model.url);
+	preview.querySelector('.mwe-popups-message').innerHTML = extractMsg;	
 	linkElement.innerHTML = linkMsg;
-	linkElement.setAttribute('href', url);
+	linkElement.setAttribute('href', model.url);
 	return renderPopup(model.type, preview);
 }

@@ -7,7 +7,9 @@ import { createTemplate } from '../templateUtil';
 import templateHTML from '!raw-loader!./pagePreview.html'
 const cloneFragment = createTemplate(templateHTML);
 
-let pagePreviewTemplate = null
+let preview = null
+let previousElement = null
+let previousModel = null
 /**
  * @param {ext.popups.PagePreviewModel} model
  * @param {ext.popups.Thumbnail|null} thumbnail
@@ -17,7 +19,11 @@ let pagePreviewTemplate = null
 export function renderPagePreview(
 	model, thumbnail
 ) {
-	const preview = cloneFragment();
+	if (model === previousModel) {
+		return previousElement;
+	}
+	preview = cloneFragment();
+
 	const discreet = preview.querySelector('.mwe-popups-discreet');
 	const extract = preview.querySelector('.mwe-popups-extract');
 
@@ -27,8 +33,9 @@ export function renderPagePreview(
 		if (thumbnail.isNarrow) {
 			preview.classList.add('mwe-popups-narrow-thumbnail');
 		}
+		discreet.removeAttribute('aria-hidden');
 	} else {
-		discreet.remove();
+		discreet.setAttribute('aria-hidden', true);
 	}
 
 	extract.setAttribute('href', model.url);
@@ -46,5 +53,6 @@ export function renderPagePreview(
 	}
 
 	const $el = renderPopup( model.type, preview);
+	previousElement = $el;
 	return $el;
 }

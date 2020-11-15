@@ -13,9 +13,15 @@ const cloneFragment = createTemplate(templateHTML);
  * @return {JQuery}
  */
 
+let popup = null
 export function renderPopup( type, innerElement ) {
-	const popup = cloneFragment().querySelector('.mwe-popups');
+	popup = popup || cloneFragment().querySelector('.mwe-popups');
 	popup.classList.add(`mwe-popups-type-${type}`);
-	popup.querySelector('.mwe-popups-container').appendChild(innerElement);
+	const container = popup.querySelector('.mwe-popups-container');
+	if (innerElement !== container.firstChild) {
+		while (container.firstChild)
+			container.firstChild.remove();
+		container.appendChild(innerElement);
+	}
 	return $(popup);
 }
